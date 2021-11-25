@@ -22,4 +22,13 @@ test:
 coverage: test
 	go tool cover -html=.coverage.txt
 
+docker-build:
+	docker-compose up --build -d
+
+docker-test: docker-build
+	docker exec -it restfbz_web make test
+
+docker-run: docker-build
+	docker exec -it restfbz_web go run cmd/restfbz/main.go 8999
+
 all: get build install

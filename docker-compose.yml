@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+    restfbz:
+        container_name: restfbz_web
+        tty: true
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+              # command: go run cmd/restfbz/main.go 8999
+        volumes:
+            - .:/go/src/app
+        ports:
+            - "8999:8999"
