@@ -18,6 +18,20 @@ func concat(ss ...string) string {
 	return sb.String()
 }
 
+func withLoggingMiddleware(h http.HandlerFunc) http.HandlerFunc {
+
+	type LoggingResponseWriter struct {
+		http.ResponseWriter
+		statusCode int
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		lw := LoggingResponseWriter{w, http.StatusOK}
+		log.Printf("%s %s", r.Method, r.URL.String())
+		h(lw, r)
+		log.Printf("%d", lw.statusCode)
+	}
+}
+
 // New : initialize the application
 func New() (app Application) {
 	app = Application{http.NewServeMux()}
@@ -38,7 +52,7 @@ func (app Application) Run(port string) {
 }
 
 func (app Application) routes() {
-	app.router.HandleFunc("/", app.handleFizzBuzz())
+	app.router.HandleFunc("/", withLoggingMiddleware(app.handleFizzBuzz()))
 }
 
 func (app Application) handleFizzBuzz() http.HandlerFunc {
