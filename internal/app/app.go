@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+const LIMIT_LIMIT int = 1000000
+
 func concat(ss ...string) string {
 	var sb strings.Builder
 	for _, s := range ss {
@@ -57,6 +59,11 @@ func (app Application) handleFizzBuzz() http.HandlerFunc {
 				val, err := strconv.Atoi(values[0])
 				if err != nil {
 					http.Error(w, concat("Invalid value for key: ", key), http.StatusBadRequest)
+					return
+				}
+				// check limit params is less than 1M
+				if key == "limit" && val > LIMIT_LIMIT {
+					http.Error(w, "Invalid value for limit param (value > 1000000)", http.StatusBadRequest)
 					return
 				}
 				intParams[key] = val
