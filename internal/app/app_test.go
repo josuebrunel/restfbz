@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -16,6 +17,9 @@ func TestApplication(t *testing.T) {
 	if app.cf.Port != port {
 		t.Fatal("Unexpected port number")
 	}
+	app.initdb()
+	defer os.Remove(app.cf.Dbfile)
+	app.makeMigrations()
 	app.routes()
 	// test with invalid method
 	req := httptest.NewRequest("POST", "/", nil)
@@ -47,6 +51,13 @@ func TestApplication(t *testing.T) {
 	}
 	// test with a correct request
 	req = httptest.NewRequest("GET", "/?int1=3&int2=5&limit=25&str1=fizz&str2=buzz", nil)
+	w = httptest.NewRecorder()
+	app.router.ServeHTTP(w, req)
+	if w.Result().StatusCode != 200 {
+		t.Fatal("Unexpected status code returned")
+	}
+	// test stats endpoint
+	req = httptest.NewRequest("GET", "/stats", nil)
 	w = httptest.NewRecorder()
 	app.router.ServeHTTP(w, req)
 	if w.Result().StatusCode != 200 {
