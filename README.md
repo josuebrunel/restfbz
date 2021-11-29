@@ -1,4 +1,6 @@
-# Problem
+[![restfbz](https://github.com/josuebrunel/restfbz/actions/workflows/tuma.yml/badge.svg)](https://github.com/josuebrunel/restfbz/actions/workflows/tuma.yml)
+
+# Service
 
 Write a simple fizz-buzz REST server.
 
@@ -20,6 +22,27 @@ Bonus: add a statistics endpoint allowing users to know what the most frequent r
 
 # Doc
 
+## Development
+
+I didn't go with something fancy with a lot of external libraries.
+The application has an internal app which is the service `restfbz` and uses 2 packages:
+* fizzbuzz: which compute a fizzbuzz series according the input
+* stats: which records the query string received in a Sqlite database
+
+I wrote 2 middlewares:
+* logging middleware to log requests
+* stats middleware which uses the *stats* package to record the query strings or the incoming request
+
+Last but not least there is a *simple Makefile* provided
+
+## Deployment
+
+Since no instructin has been given there is a  *docker-compose* file provided.
+
+Alternatively I would go with:
+1. A versioned binary built through an CI/CD pipeline and push to a repository
+2. An ansible roles which would install the binary from the repository, create the required user and rights then set up a systemd config for the service
+
 ## Endpoints
 
 ```
@@ -32,12 +55,21 @@ Params:
     * str2 : string replacing multiple of int2
 ```
 
-The */stats* endpoint is not implemented. Below is the descriptin of what I would have done:
+```
+Path: /stats
+```
 
-1. Have a single table with columns corresponding to all the required params, plus a *hit* column. This give more flexibility in a way stats on a single parameter value can be returned.
-   Alternatively, it's possible to use an encoded string of *ordered query strings params* ( base64.b64encode(b"int1=3&int2=5&limit=25&str1=fizz&str2=buzz") ) in a 2 columns table with *encoded* and *hits*, since it is deterministic.  
-2. For each request, I would record those parameter in a `StatsMiddleware` in a *UPDATE OR INSERT* manner
+## Build the service binary
 
+```shell
+$ make build
+```
+
+## Run test
+
+```shell
+$ make test
+```
 
 ## Run service via Docker
 
@@ -45,7 +77,7 @@ The */stats* endpoint is not implemented. Below is the descriptin of what I woul
 $ make docker-run
 ```
 
-## Run tests
+## Run tests via Docker
 
 ```shell
 $ make docker-test
@@ -54,32 +86,53 @@ $ make docker-test
 ## Example
 
 ```shell
-$ curl -v "http://127.0.0.1:8999/?int1=3&int2=5&limit=25&str1=fizz&str2=buzz" | jq
-[
-  "1",
-  "2",
-  "fizz",
-  "4",
-  "buzz",
-  "fizz",
-  "7",
-  "8",
-  "fizz",
-  "buzz",
-  "11",
-  "fizz",
-  "13",
-  "14",
-  "fizzbuzz",
-  "16",
-  "17",
-  "fizz",
-  "19",
-  "buzz",
-  "fizz",
-  "22",
-  "23",
-  "fizz",
-  "buzz"
-]
+$ curl -v "http://127.0.0.1:8999/?int1=3&int2=5&limit=30&str1=foo&str2=bar" | jq
+{
+  "count": 30,
+  "error": null,
+  "data": [
+    "1",
+    "2",
+    "foo",
+    "4",
+    "bar",
+    "foo",
+    "7",
+    "8",
+    "foo",
+    "bar",
+    "11",
+    "foo",
+    "13",
+    "14",
+    "foobar",
+    "16",
+    "17",
+    "foo",
+    "19",
+    "bar",
+    "foo",
+    "22",
+    "23",
+    "foo",
+    "bar",
+    "26",
+    "foo",
+    "28",
+    "29",
+    "foobar"
+  ]
+}
+```
+
+```shell
+$ curl -v "http://127.0.0.1:8999/stats" | jq
+{
+  "count": 1,
+  "error": null,
+  "data": {
+    "qs": "int1=3&int2=5&limit=30&str1=foo&str2=bar",
+    "hit": 5
+  }
+}
 ```
