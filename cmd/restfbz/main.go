@@ -1,18 +1,15 @@
 package main
 
 import (
-	"os"
+	"flag"
 	app "restfbz/internal/app"
 )
 
 func main() {
-	var port string
-	if len(os.Args) < 2 {
-		port = "8080"
-	} else {
-		port = os.Args[1]
-	}
-
-	server := app.New()
-	server.Run(port)
+	port := flag.String("port", "8999", "Port on which the server will listen")
+	dbfile := flag.String("dbfile", "restfbz.db", "Filename of the sqlite db")
+	flag.Parse()
+	cf := app.Config{Dbfile: *dbfile, Port: *port}
+	server := app.New(cf)
+	server.Run()
 }

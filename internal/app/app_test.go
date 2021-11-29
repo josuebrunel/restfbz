@@ -6,7 +6,16 @@ import (
 )
 
 func TestApplication(t *testing.T) {
-	app := New()
+	dbfile := "test.db"
+	port := "8989"
+	cf := Config{dbfile, port}
+	app := New(cf)
+	if app.cf.Dbfile != dbfile {
+		t.Fatal("Unexpected dbfile name")
+	}
+	if app.cf.Port != port {
+		t.Fatal("Unexpected port number")
+	}
 	app.routes()
 	// test with invalid method
 	req := httptest.NewRequest("POST", "/", nil)

@@ -20,9 +20,15 @@ func concat(ss ...string) string {
 	return sb.String()
 }
 
+// Config is a structure holding the application settings
+type Config struct {
+	Dbfile string
+	Port   string
+}
+
 // New : initialize the application
-func New() (app Application) {
-	app = Application{http.NewServeMux()}
+func New(cf Config) (app Application) {
+	app = Application{http.NewServeMux(), cf}
 	return
 }
 
@@ -30,13 +36,14 @@ func New() (app Application) {
 // * router: a simple router
 type Application struct {
 	router *http.ServeMux
+	cf     Config
 }
 
 // Run laumches the http server
-func (app Application) Run(port string) {
+func (app Application) Run() {
 	app.routes()
-	log.Printf(fmt.Sprintf("Server started and listening on %s", port))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), app.router))
+	log.Printf(fmt.Sprintf("Server started and listening on %s", app.cf.Port))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", app.cf.Port), app.router))
 }
 
 func (app Application) routes() {
