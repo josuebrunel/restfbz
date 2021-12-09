@@ -7,12 +7,12 @@ import (
 	"restfbz/pkg/stats"
 )
 
-type loggingResponseWriter struct {
+type customResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
 
-func (lrw *loggingResponseWriter) WriteHeader(code int) {
+func (lrw *customResponseWriter) WriteHeader(code int) {
 	lrw.statusCode = code
 	lrw.ResponseWriter.WriteHeader(code)
 }
@@ -20,7 +20,7 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 func withLoggingMiddleware(h http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		lw := &loggingResponseWriter{w, http.StatusOK}
+		lw := &customResponseWriter{w, http.StatusOK}
 		log.Printf("%s %s", r.Method, r.URL.String())
 		h(lw, r)
 		log.Printf("%d", lw.statusCode)
@@ -30,7 +30,11 @@ func withLoggingMiddleware(h http.HandlerFunc) http.HandlerFunc {
 func withStatsMiddleware(h http.HandlerFunc, db *sql.DB) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		h(w, r)
+		cw := &customResponseWriter{w, http.StatusOK}
+		h(cw, r)
+		if cw.statusCode != http.StatusOK {
+			return
+		}
 		sr := stats.New(db)
 		url := r.URL.String()
 		err := sr.CreateRecord(url)
