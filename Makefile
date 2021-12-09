@@ -1,5 +1,8 @@
 .PHONY: all test coverage
 
+NAME = restfbz
+DOCKER_CONTAINER_NAME = $(NAME)_web
+
 clean:
 	go clean -i -x
 
@@ -7,7 +10,7 @@ get:
 	go get -u ./...
 
 build:
-	go build -o bin/restfbz cmd/restfbz/main.go
+	go build -o bin/$(NAME) cmd/$(NAME)/main.go
 
 install:
 	go install ./...
@@ -26,9 +29,9 @@ docker-build:
 	docker-compose up --build -d
 
 docker-test: docker-build
-	docker exec -it restfbz_web make test
+	docker exec -it $(DOCKER_CONTAINER_NAME) make test
 
 docker-run: docker-build
-	docker exec -it restfbz_web go run cmd/restfbz/main.go 8999
+	docker exec -it $(DOCKER_CONTAINER_NAME) go run cmd/$(NAME)/main.go 8999
 
 all: get build install
